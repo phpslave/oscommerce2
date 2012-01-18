@@ -229,9 +229,9 @@
 
       if (isset($HTTP_POST_VARS['cc_owner_firstname']) && !empty($HTTP_POST_VARS['cc_owner_firstname']) && isset($HTTP_POST_VARS['cc_owner_lastname']) && !empty($HTTP_POST_VARS['cc_owner_lastname']) && isset($HTTP_POST_VARS['cc_type']) && isset($this->cc_types[$HTTP_POST_VARS['cc_type']]) && isset($HTTP_POST_VARS['cc_number_nh-dns']) && !empty($HTTP_POST_VARS['cc_number_nh-dns'])) {
         if (MODULE_PAYMENT_PAYPAL_PRO_PAYFLOW_DP_TRANSACTION_SERVER == 'Live') {
-          $api_url = 'https://payflowpro.verisign.com/transaction';
+          $api_url = 'https://payflowpro.paypal.com';
         } else {
-          $api_url = 'https://pilot-payflowpro.verisign.com/transaction';
+          $api_url = 'https://pilot-payflowpro.paypal.com';
         }
 
         $name = explode(' ', $HTTP_POST_VARS['cc_owner'], 2);
@@ -285,7 +285,12 @@
         $response = $this->sendTransactionToGateway($api_url, $post_string, array('X-VPS-REQUEST-ID: ' . md5($cartID . tep_session_id() . rand())));
         $response_array = array();
         parse_str($response, $response_array);
-
+        
+		$fp = fopen('/tmp/payflowdb.log', 'a+');
+		fwrite($fp, $post_string ."\n");
+		fwrite($fp, serialize($response_array) . "\n");
+		fwrite($fp, $post_string ."\n");
+		fclose($fp);
         if ($response_array['RESULT'] != '0') {
           switch ($response_array['RESULT']) {
             case '1':

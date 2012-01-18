@@ -39,17 +39,18 @@
   if (isset($HTTP_POST_VARS['payment'])) $payment = $HTTP_POST_VARS['payment'];
 
   if (!tep_session_is_registered('comments')) tep_session_register('comments');
-  if (isset($HTTP_POST_VARS['comments']) && tep_not_null($HTTP_POST_VARS['comments'])) {
+  if (tep_not_null($HTTP_POST_VARS['comments'])) {
     $comments = tep_db_prepare_input($HTTP_POST_VARS['comments']);
   }
 
 // load the selected payment module
   require(DIR_WS_CLASSES . 'payment.php');
   $payment_modules = new payment($payment);
+  
 
   require(DIR_WS_CLASSES . 'order.php');
   $order = new order;
-
+  
   $payment_modules->update_status();
 
   if ( ($payment_modules->selected_module != $payment) || ( is_array($payment_modules->modules) && (sizeof($payment_modules->modules) > 1) && !is_object($$payment) ) || (is_object($$payment) && ($$payment->enabled == false)) ) {
@@ -57,9 +58,15 @@
   }
 
   if (is_array($payment_modules->modules)) {
-    $payment_modules->pre_confirmation_check();
+  	  if($payment == 'paypal_payflow_link'){
+  	  	if(isset($_SESSION['tk'])){
+  	  		unset($_SESSION['tk']);
+  	  	}
+  	  	$payment_modules->pre_confirmation_check();
+  	  }else{
+  	  	$payment_modules->pre_confirmation_check();
+  	  }
   }
-
 // load the selected shipping module
   require(DIR_WS_CLASSES . 'shipping.php');
   $shipping_modules = new shipping($shipping);
@@ -81,7 +88,7 @@
       tep_redirect(tep_href_link(FILENAME_SHOPPING_CART));
     }
   }
-
+   
   require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_CHECKOUT_CONFIRMATION);
 
   $breadcrumb->add(NAVBAR_TITLE_1, tep_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
@@ -239,7 +246,14 @@
       </tr>
 
 <?php
-    if (isset($confirmation['fields'])) {
+  if (is_array($payment_modules->modules)) {
+  	  if($payment == 'paypal_payflow_link'){
+  	?>
+  	<iframe src="<?php print $confirmation['iframe']['src'];?>" width="<?php print $confirmation['iframe']['width'];?>" height="<?php print $confirmation['iframe']['height'];?>" scrolling="no" frameborder="0" border="0">
+  	</iframe>
+  	<?php 	
+  	  }
+  }
       for ($i=0, $n=sizeof($confirmation['fields']); $i<$n; $i++) {
 ?>
 
@@ -252,7 +266,6 @@
 
 <?php
       }
-    }  
 ?>
 
     </table>
@@ -291,11 +304,13 @@
     <div style="float: right;">
 
 <?php
-  if (is_array($payment_modules->modules)) {
+if($payment != 'paypal_payflow_link'){ 
+ if (is_array($payment_modules->modules)) {
     echo $payment_modules->process_button();
   }
-
+  
   echo tep_draw_button(IMAGE_BUTTON_CONFIRM_ORDER, 'check', null, 'primary');
+}
 ?>
 
     </div>

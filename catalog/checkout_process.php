@@ -155,7 +155,7 @@
                             WHERE p.products_id = '" . tep_get_prid($order->products[$i]['id']) . "'";
 // Will work with only one option for downloadable products
 // otherwise, we have to build the query dynamically with a loop
-        $products_attributes = (isset($order->products[$i]['attributes'])) ? $order->products[$i]['attributes'] : '';
+        $products_attributes = $order->products[$i]['attributes'];
         if (is_array($products_attributes)) {
           $stock_query_raw .= " AND pa.options_id = '" . $products_attributes[0]['option_id'] . "' AND pa.options_values_id = '" . $products_attributes[0]['value_id'] . "'";
         }
@@ -294,7 +294,18 @@
   tep_session_unregister('payment');
   tep_session_unregister('comments');
 
+    if (is_array($payment_modules->modules)) {
+  	  if($payment == 'paypal_payflow_link'){
+  	  	// need to open up the parent window to the FILENAME_CHECKOUT_SUCCESS
+  	  	?>
+		<script type="text/javascript"><!--
+			parent.location = "<?php print FILENAME_CHECKOUT_SUCCESS;?>";
+		// -->
+		</script>
+  	  	<?php 
+  	  	exit();	
+  	  }
+    }
   tep_redirect(tep_href_link(FILENAME_CHECKOUT_SUCCESS, '', 'SSL'));
-
   require(DIR_WS_INCLUDES . 'application_bottom.php');
 ?>
